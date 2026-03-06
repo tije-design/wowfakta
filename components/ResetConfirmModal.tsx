@@ -23,7 +23,7 @@ export default function ResetConfirmModal({ onConfirm, onCancel }: Props) {
       onClick={e => { if (e.target === e.currentTarget) onCancel() }}
     >
       <div
-        className="w-full max-w-sm rounded-3xl p-6 animate-pop-in"
+        className="w-full max-w-sm rounded-xl p-6 animate-pop-in"
         style={{
           background: '#060f1e',
           border: '1px solid rgba(239,68,68,0.35)',
@@ -32,7 +32,7 @@ export default function ResetConfirmModal({ onConfirm, onCancel }: Props) {
       >
         {/* Icon */}
         <div
-          className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl"
+          className="w-14 h-14 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl"
           style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.25)' }}
         >
           🗑️
@@ -52,7 +52,7 @@ export default function ResetConfirmModal({ onConfirm, onCancel }: Props) {
           <button
             onClick={onCancel}
             disabled={loading}
-            className="flex-1 py-3.5 rounded-2xl text-white/50 font-semibold text-sm transition-colors hover:text-white/80 disabled:opacity-40"
+            className="flex-1 py-3.5 rounded-lg text-white/50 font-semibold text-sm transition-colors hover:text-white/80 disabled:opacity-40"
             style={{ border: '1px solid rgba(255,255,255,0.1)' }}
           >
             Batal
@@ -60,7 +60,7 @@ export default function ResetConfirmModal({ onConfirm, onCancel }: Props) {
           <button
             onClick={handleConfirm}
             disabled={loading}
-            className="flex-1 py-3.5 rounded-2xl font-black text-sm transition-all active:scale-[0.97] disabled:opacity-50"
+            className="flex-1 py-3.5 rounded-lg font-black text-sm transition-all active:scale-[0.97] disabled:opacity-50"
             style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.35)' }}
           >
             {loading ? (

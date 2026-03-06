@@ -100,7 +100,7 @@ export default function SubmissionPhase({
         </div>
 
         {/* Progress card */}
-        <div className="glass-card rounded-2xl p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.06s', opacity: 0 }}>
+        <div className="glass-card rounded-lg p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.06s', opacity: 0 }}>
           <div className="flex items-center justify-between mb-3">
             <span className="text-white/60 text-xs font-semibold uppercase tracking-wide">Submission</span>
             <span className="text-white/80 text-xs font-bold">
@@ -151,18 +151,18 @@ export default function SubmissionPhase({
 
         {/* Main content */}
         {myFact ? (
-          <div className="glass-card rounded-3xl p-6 animate-pop-in">
+          <div className="glass-card rounded-xl p-6 animate-pop-in">
 
             {/* Submitted state */}
             {!confirmCancel ? (
               <>
                 <div className="text-center mb-5">
-                  <div className="w-14 h-14 rounded-2xl mx-auto mb-4 flex items-center justify-center text-2xl"
+                  <div className="w-14 h-14 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl"
                     style={{ background: 'rgba(16,185,129,0.15)', border: '1px solid rgba(16,185,129,0.3)' }}>
                     ✅
                   </div>
                   <h3 className="text-lg font-bold text-white mb-3">Faktamu sudah masuk!</h3>
-                  <div className="rounded-2xl p-4 mb-4 text-left" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <div className="rounded-lg p-4 mb-4 text-left" style={{ background: 'rgba(255,255,255,0.05)' }}>
                     <p className="text-white/80 text-sm leading-relaxed italic">"{myFact.content}"</p>
                   </div>
                   <div className="flex items-center justify-center gap-2 mb-5">
@@ -177,7 +177,7 @@ export default function SubmissionPhase({
                 {/* Edit button */}
                 <button
                   onClick={() => setConfirmCancel(true)}
-                  className="w-full py-2.5 rounded-2xl text-white/40 text-sm font-semibold hover:text-white/70 transition-colors"
+                  className="w-full py-2.5 rounded-lg text-white/40 text-sm font-semibold hover:text-white/70 transition-colors"
                   style={{ border: '1px solid rgba(255,255,255,0.08)' }}
                 >
                   ✏️ Edit fakta
@@ -192,7 +192,7 @@ export default function SubmissionPhase({
                 <div className="flex gap-2">
                   <button
                     onClick={() => setConfirmCancel(false)}
-                    className="flex-1 py-3 rounded-2xl text-white/50 font-semibold text-sm transition-colors hover:text-white/80"
+                    className="flex-1 py-3 rounded-lg text-white/50 font-semibold text-sm transition-colors hover:text-white/80"
                     style={{ border: '1px solid rgba(255,255,255,0.1)' }}
                   >
                     Tidak
@@ -200,7 +200,7 @@ export default function SubmissionPhase({
                   <button
                     onClick={handleCancelFact}
                     disabled={cancelLoading}
-                    className="flex-1 py-3 rounded-2xl font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
+                    className="flex-1 py-3 rounded-lg font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50"
                     style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.3)' }}
                   >
                     {cancelLoading ? (
@@ -215,14 +215,14 @@ export default function SubmissionPhase({
             )}
           </div>
         ) : (
-          <div className="glass-card rounded-3xl p-5 animate-slide-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
+          <div className="glass-card rounded-xl p-5 animate-slide-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
             <textarea
               value={content}
               onChange={e => setContent(e.target.value)}
               placeholder="Tulis fakta unik yang kamu tahu..."
               maxLength={MAX_FACT_LENGTH}
               rows={5}
-              className="w-full rounded-2xl p-4 text-white text-base resize-none focus:outline-none placeholder:text-white/20 transition-all duration-200 mb-3"
+              className="w-full rounded-lg p-4 text-white text-base resize-none focus:outline-none placeholder:text-white/20 transition-all duration-200 mb-3"
               style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.08)' }}
               onFocus={e => e.target.style.border = '1px solid rgba(8,70,161,0.6)'}
               onBlur={e => e.target.style.border = '1px solid rgba(255,255,255,0.08)'}
@@ -251,7 +251,7 @@ export default function SubmissionPhase({
             <button
               onClick={handleSubmit}
               disabled={loading || !content.trim()}
-              className="w-full py-4 rounded-2xl text-white font-black text-base tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-4 rounded-lg text-white font-black text-base tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: loading || !content.trim() ? 'rgba(8,70,161,0.4)' : 'linear-gradient(135deg, #0846A1, #0655BA)' }}
             >
               {loading ? (
@@ -266,7 +266,7 @@ export default function SubmissionPhase({
 
         {/* Admin panel */}
         {isAdmin && (
-          <div className="mt-4 rounded-3xl p-5 animate-slide-up" style={{ animationDelay: '0.15s', opacity: 0, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          <div className="mt-4 rounded-xl p-5 animate-slide-up" style={{ animationDelay: '0.15s', opacity: 0, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-amber-400 text-sm">⚡</span>
               <span className="text-amber-400 text-xs font-bold tracking-widest uppercase">Panel Admin</span>
@@ -279,7 +279,7 @@ export default function SubmissionPhase({
             <button
               onClick={handleStartVoting}
               disabled={adminLoading || allFacts.length < 2}
-              className="w-full py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
+              className="w-full py-3.5 rounded-lg font-black text-sm tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-40 disabled:cursor-not-allowed"
               style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#1a1035' }}
             >
               {adminLoading ? 'Memulai...' : '⚡ Mulai Voting'}
@@ -290,7 +290,7 @@ export default function SubmissionPhase({
 
             <button
               onClick={() => setConfirmReset(true)}
-              className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-colors"
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
               style={{ color: 'rgba(248,113,113,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}
             >
               🗑️ Reset data hari ini

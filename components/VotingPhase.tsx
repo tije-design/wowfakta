@@ -91,7 +91,7 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote
           <div className="mb-5 animate-slide-up" style={{ animationDelay: '0.06s', opacity: 0 }}>
             <p className="text-[10px] font-bold text-white/25 tracking-widest uppercase mb-2 ml-1">Fakta kamu</p>
             <div
-              className="rounded-2xl px-4 py-4 flex items-start gap-3"
+              className="rounded-lg px-4 py-4 flex items-start gap-3"
               style={{
                 background: 'rgba(255,255,255,0.05)',
                 border: '1px solid rgba(255,255,255,0.08)',
@@ -249,7 +249,7 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote
 
         {/* Admin panel */}
         {isAdmin && (
-          <div className="rounded-3xl p-5 animate-slide-up" style={{ animationDelay: '0.5s', opacity: 0, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          <div className="rounded-xl p-5 animate-slide-up" style={{ animationDelay: '0.5s', opacity: 0, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-amber-400 text-sm">⚡</span>
               <span className="text-amber-400 text-xs font-bold tracking-widest uppercase">Panel Admin</span>
@@ -258,7 +258,7 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote
             <button
               onClick={handleEndVoting}
               disabled={adminLoading}
-              className="w-full py-3.5 rounded-2xl font-black text-sm tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-40"
+              className="w-full py-3.5 rounded-lg font-black text-sm tracking-wide transition-all duration-200 active:scale-[0.98] disabled:opacity-40"
               style={{ background: 'linear-gradient(135deg, #f59e0b, #d97706)', color: '#1a1035' }}
             >
               {adminLoading ? 'Menutup...' : '🏁 Selesai Voting'}
@@ -268,7 +268,7 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote
 
             <button
               onClick={() => setConfirmReset(true)}
-              className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-colors"
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
               style={{ color: 'rgba(248,113,113,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}
             >
               🗑️ Reset data hari ini

@@ -54,7 +54,7 @@ export default function HistoryPage() {
             <div className="text-5xl mb-4">📭</div>
             <p className="text-white/60 font-semibold text-lg mb-1">Belum ada history</p>
             <p className="text-white/30 text-sm mb-8">Selesaikan sesi pertama dulu</p>
-            <Link href="/" className="inline-block py-3 px-8 rounded-2xl font-bold text-white transition-all"
+            <Link href="/" className="inline-block py-3 px-8 rounded-lg font-bold text-white transition-all"
               style={{ background: 'linear-gradient(135deg, #0846A1, #0655BA)' }}>
               Mulai Sekarang
             </Link>
@@ -77,7 +77,7 @@ export default function HistoryPage() {
                   </div>
 
                   {/* Facts with bars */}
-                  <div className="glass-card rounded-3xl p-4 space-y-3">
+                  <div className="glass-card rounded-xl p-4 space-y-3">
                     {facts.map((fact, fi) => {
                       const fMemberIdx = MEMBERS.indexOf(fact.member_name as typeof MEMBERS[number])
                       const barColor = BAR_COLORS[fMemberIdx % BAR_COLORS.length]

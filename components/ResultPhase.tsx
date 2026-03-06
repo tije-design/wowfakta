@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Fact, Vote, LeaderboardEntry } from '@/lib/supabase'
 import { Member, MEMBERS, ADMIN } from '@/lib/constants'
 import Avatar from '@/components/Avatar'
@@ -9,6 +9,21 @@ import TopBar from '@/components/TopBar'
 import ResetConfirmModal from '@/components/ResetConfirmModal'
 
 type FactWithVotes = Fact & { vote_count: number }
+
+type AiEvaluation = {
+  member_name: string
+  interest_score: number
+  accuracy: 'Tinggi' | 'Sedang' | 'Rendah'
+  comment: string
+}
+
+type AiResult = {
+  evaluations: AiEvaluation[]
+  winner: {
+    member_name: string
+    reason: string
+  }
+}
 
 type Props = {
   currentUser: Member
@@ -21,8 +36,16 @@ type Props = {
 
 const BAR_COLORS = ['#0846A1','#2563eb','#db2777','#d97706','#059669','#0655BA','#ec4899']
 
+const ACCURACY_COLOR: Record<string, string> = {
+  Tinggi: '#4ade80',
+  Sedang: '#fbbf24',
+  Rendah: '#f87171',
+}
+
 export default function ResultPhase({ currentUser, facts, votes, leaderboard, onReset, onLogout }: Props) {
   const [confirmReset, setConfirmReset] = useState(false)
+  const [aiResult, setAiResult] = useState<AiResult | null>(null)
+  const [aiLoading, setAiLoading] = useState(true)
 
   const isAdmin = currentUser === ADMIN
 
@@ -35,6 +58,19 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
   const maxVotes = Math.max(...factsWithVotes.map(f => f.vote_count), 1)
   const winner = factsWithVotes[0]
   const isWinner = winner?.member_name === currentUser && winner.vote_count > 0
+
+  useEffect(() => {
+    if (facts.length === 0) { setAiLoading(false); return }
+    fetch('/api/evaluate', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ facts }),
+    })
+      .then(r => r.json())
+      .then(data => { if (!data.error) setAiResult(data) })
+      .catch(() => {})
+      .finally(() => setAiLoading(false))
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="menti-bg min-h-screen text-white flex flex-col">
@@ -61,7 +97,7 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
         </div>
 
         {/* Results — bar chart */}
-        <div className="glass-card rounded-3xl p-5 mb-5 animate-slide-up" style={{ animationDelay: '0.07s', opacity: 0 }}>
+        <div className="glass-card rounded-xl p-5 mb-5 animate-slide-up" style={{ animationDelay: '0.07s', opacity: 0 }}>
           <p className="text-white/50 text-xs font-bold tracking-widest uppercase mb-4">Hasil Hari Ini</p>
 
           <div className="space-y-4">
@@ -107,12 +143,64 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
           </div>
         </div>
 
+        {/* AI Evaluation */}
+        <div className="rounded-xl p-5 mb-5 animate-slide-up" style={{ animationDelay: '0.35s', opacity: 0, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-base">🤖</span>
+            <span className="text-violet-400 text-xs font-bold tracking-widest uppercase">Penilaian Claude AI</span>
+          </div>
+
+          {aiLoading ? (
+            <div className="flex items-center gap-3 py-2">
+              <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin flex-shrink-0" />
+              <span className="text-white/30 text-sm">Sedang menganalisis fakta-fakta...</span>
+            </div>
+          ) : aiResult ? (
+            <>
+              {/* AI Winner pick */}
+              <div className="rounded-lg px-4 py-3 mb-4" style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)' }}>
+                <p className="text-violet-300 text-[10px] font-bold tracking-widest uppercase mb-1.5">Pilihan Terbaik AI</p>
+                <div className="flex items-center gap-2 mb-1.5">
+                  <Avatar name={aiResult.winner.member_name} size={20} rounded="rounded-md" />
+                  <span className="text-white font-bold text-sm">{aiResult.winner.member_name}</span>
+                </div>
+                <p className="text-white/60 text-xs leading-relaxed">{aiResult.winner.reason}</p>
+              </div>
+
+              {/* Per-fact evaluations */}
+              <div className="space-y-2.5">
+                {aiResult.evaluations.map((ev) => {
+                  const fact = facts.find(f => f.member_name === ev.member_name)
+                  return (
+                    <div key={ev.member_name} className="flex items-start gap-3">
+                      <Avatar name={ev.member_name} size={18} rounded="rounded-md" className="flex-shrink-0 mt-0.5" />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-2 mb-0.5">
+                          <span className="text-white/70 text-xs font-semibold">{ev.member_name}</span>
+                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${ACCURACY_COLOR[ev.accuracy]}20`, color: ACCURACY_COLOR[ev.accuracy] }}>
+                            {ev.accuracy}
+                          </span>
+                          <span className="text-white/30 text-[10px] ml-auto">★ {ev.interest_score}/10</span>
+                        </div>
+                        {fact && <p className="text-white/30 text-[10px] mb-0.5 truncate">&ldquo;{fact.content}&rdquo;</p>}
+                        <p className="text-white/50 text-[11px]">{ev.comment}</p>
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </>
+          ) : (
+            <p className="text-white/30 text-sm">Gagal memuat penilaian AI.</p>
+          )}
+        </div>
+
         {/* Racing leaderboard */}
         <RacingLeaderboard leaderboard={leaderboard} currentUser={currentUser} />
 
         {/* Admin panel */}
         {isAdmin && (
-          <div className="mt-5 rounded-3xl p-5 animate-slide-up" style={{ animationDelay: '0.7s', opacity: 0, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
+          <div className="mt-5 rounded-xl p-5 animate-slide-up" style={{ animationDelay: '0.7s', opacity: 0, background: 'rgba(245,158,11,0.08)', border: '1px solid rgba(245,158,11,0.2)' }}>
             <div className="flex items-center gap-2 mb-1">
               <span className="text-amber-400 text-sm">⚡</span>
               <span className="text-amber-400 text-xs font-bold tracking-widest uppercase">Panel Admin</span>
@@ -120,7 +208,7 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
             <p className="text-white/30 text-xs mb-4">Mulai sesi baru untuk hari berikutnya</p>
             <button
               onClick={() => setConfirmReset(true)}
-              className="w-full py-2.5 rounded-2xl text-sm font-semibold transition-colors"
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
               style={{ color: 'rgba(248,113,113,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}
             >
               🗑️ Reset data hari ini

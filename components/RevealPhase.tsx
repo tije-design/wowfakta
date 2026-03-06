@@ -59,7 +59,7 @@ export default function RevealPhase({ currentUser, onReveal, onLogout }: Props) 
           <button
             onClick={handleReveal}
             disabled={pressed}
-            className="w-full py-4 rounded-2xl font-black text-base tracking-wide transition-all duration-300 active:scale-[0.97] disabled:opacity-60"
+            className="w-full py-4 rounded-lg font-black text-base tracking-wide transition-all duration-300 active:scale-[0.97] disabled:opacity-60"
             style={{
               background: pressed
                 ? 'rgba(8,70,161,0.5)'

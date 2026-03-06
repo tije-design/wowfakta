@@ -32,7 +32,7 @@ export default function RacingLeaderboard({ leaderboard, currentUser }: Props) {
   )
 
   return (
-    <div className="glass-card rounded-3xl p-5 animate-slide-up" style={{ animationDelay: '0.5s', opacity: 0 }}>
+    <div className="glass-card rounded-xl p-5 animate-slide-up" style={{ animationDelay: '0.5s', opacity: 0 }}>
 
       {/* Header */}
       <div className="flex items-center justify-between mb-5">

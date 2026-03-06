@@ -65,7 +65,7 @@ export default function TopBar({ currentUser, onLogout }: Props) {
 
         {menuOpen && (
           <div
-            className="absolute top-full left-0 mt-2 z-50 rounded-2xl overflow-hidden animate-pop-in"
+            className="absolute top-full left-0 mt-2 z-50 rounded-lg overflow-hidden animate-pop-in"
             style={{
               background: 'rgba(10,20,40,0.95)',
               border: '1px solid rgba(255,255,255,0.12)',
