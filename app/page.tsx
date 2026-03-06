@@ -1,65 +1,245 @@
-import Image from "next/image";
+'use client'
+
+import { useEffect, useState, useCallback, useRef } from 'react'
+import { Member, MEMBERS } from '@/lib/constants'
+import { Session, Fact, Vote, LeaderboardEntry } from '@/lib/supabase'
+import { supabase } from '@/lib/supabase'
+import NamePicker from '@/components/NamePicker'
+import SubmissionPhase from '@/components/SubmissionPhase'
+import VotingPhase from '@/components/VotingPhase'
+import RevealPhase from '@/components/RevealPhase'
+import ResultPhase from '@/components/ResultPhase'
+
+type SessionData = {
+  session: Session
+  facts: Fact[]
+  votes: Vote[]
+}
 
 export default function Home() {
+  const [currentUser, setCurrentUser] = useState<Member | null>(null)
+  const [sessionData, setSessionData] = useState<SessionData | null>(null)
+  const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [presentUsers, setPresentUsers] = useState<string[]>([])
+  const [revealed, setRevealed] = useState(false)
+  const currentUserRef = useRef<Member | null>(null)
+
+  const fetchSession = useCallback(async () => {
+    const voter = currentUserRef.current ?? ''
+    const params = voter ? `?voter=${encodeURIComponent(voter)}` : ''
+    const res = await fetch(`/api/session${params}`)
+    const data = await res.json()
+    if (!res.ok) {
+      console.error(data.error)
+      return
+    }
+    setSessionData(data)
+  }, [])
+
+  const fetchLeaderboard = useCallback(async () => {
+    const res = await fetch('/api/leaderboard')
+    const data = await res.json()
+    if (res.ok) setLeaderboard(data.leaderboard)
+  }, [])
+
+  useEffect(() => {
+    const savedName = localStorage.getItem('factboard_name') as Member | null
+    if (savedName && MEMBERS.includes(savedName)) {
+      setCurrentUser(savedName)
+    }
+    Promise.all([fetchSession(), fetchLeaderboard()]).finally(() => setLoading(false))
+  }, [fetchSession, fetchLeaderboard])
+
+  // Realtime: DB changes + Presence
+  useEffect(() => {
+    const channel = supabase
+      .channel('factboard_realtime')
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, () => fetchSession())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'facts' }, () => fetchSession())
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => fetchSession())
+      .on('presence', { event: 'sync' }, () => {
+        const state = channel.presenceState<{ user: string }>()
+        const users = [...new Set(Object.values(state).flat().map(p => p.user))]
+        setPresentUsers(users)
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED' && currentUser) {
+          await channel.track({ user: currentUser })
+        }
+      })
+
+    return () => { supabase.removeChannel(channel) }
+  }, [fetchSession, currentUser])
+
+  // Sync ref agar fetchSession selalu tahu voter terkini
+  useEffect(() => { currentUserRef.current = currentUser }, [currentUser])
+
+  const handleSelectName = (name: Member) => {
+    localStorage.setItem('factboard_name', name)
+    currentUserRef.current = name
+    setCurrentUser(name)
+  }
+
+  const handleLogout = () => {
+    localStorage.removeItem('factboard_name')
+    setCurrentUser(null)
+    setPresentUsers([])
+  }
+
+  const handleSubmitFact = async (content: string) => {
+    if (!sessionData || !currentUser) return
+    const res = await fetch('/api/facts', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, member_name: currentUser, content }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    await fetchSession()
+  }
+
+  const handleCancelFact = async () => {
+    if (!sessionData || !currentUser) return
+    const res = await fetch('/api/facts', {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, member_name: currentUser }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    await fetchSession()
+  }
+
+  const handleStartVoting = async () => {
+    if (!sessionData || !currentUser) return
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, action: 'start_voting', requester: currentUser }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    await fetchSession()
+  }
+
+  const handleVote = async (factId: string) => {
+    if (!sessionData || !currentUser) return
+    const res = await fetch('/api/votes', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, voter_name: currentUser, fact_id: factId }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    await fetchSession()
+  }
+
+  const handleEndVoting = async () => {
+    if (!sessionData || !currentUser) return
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, action: 'end_voting', requester: currentUser }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    await Promise.all([fetchSession(), fetchLeaderboard()])
+  }
+
+  const handleReset = async () => {
+    if (!sessionData || !currentUser) return
+    const res = await fetch('/api/admin', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, action: 'reset', requester: currentUser }),
+    })
+    const data = await res.json()
+    if (!res.ok) throw new Error(data.error)
+    setRevealed(false)
+    await Promise.all([fetchSession(), fetchLeaderboard()])
+  }
+
+  if (loading) {
+    return (
+      <div className="menti-bg min-h-screen flex items-center justify-center">
+        <div className="w-6 h-6 border-2 rounded-full animate-spin"
+          style={{ borderColor: 'rgba(255,255,255,0.1) rgba(255,255,255,0.1) rgba(255,255,255,0.1) #60a5fa' }} />
+      </div>
+    )
+  }
+
+  if (!currentUser) {
+    return <NamePicker onSelect={handleSelectName} />
+  }
+
+  if (!sessionData) {
+    return (
+      <div className="menti-bg min-h-screen flex items-center justify-center text-white/40">
+        Gagal memuat session
+      </div>
+    )
+  }
+
+  const { session, facts, votes } = sessionData
+  const myFact = facts.find(f => f.member_name === currentUser) || null
+  const myVote = votes.find(v => v.voter_name === currentUser) || null
+
+  // Presences dari Realtime. Fallback ke facts jika belum ada yang tertrack
+  const presences = presentUsers.length > 0
+    ? presentUsers.map(u => ({ member_name: u }))
+    : facts.map(f => ({ member_name: f.member_name }))
+
+  if (session.status === 'submission') {
+    return (
+      <SubmissionPhase
+        session={session}
+        currentUser={currentUser}
+        myFact={myFact}
+        allFacts={facts}
+        presences={presences}
+        onSubmit={handleSubmitFact}
+        onCancelFact={handleCancelFact}
+        onStartVoting={handleStartVoting}
+        onReset={handleReset}
+        onLogout={handleLogout}
+      />
+    )
+  }
+
+  if (session.status === 'voting') {
+    return (
+      <VotingPhase
+        currentUser={currentUser}
+        facts={facts}
+        myFact={myFact}
+        myVote={myVote}
+        onVote={handleVote}
+        onEndVoting={handleEndVoting}
+        onReset={handleReset}
+        onLogout={handleLogout}
+      />
+    )
+  }
+
+  if (!revealed) {
+    return (
+      <RevealPhase
+        currentUser={currentUser}
+        onReveal={() => setRevealed(true)}
+        onLogout={handleLogout}
+      />
+    )
+  }
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
-    </div>
-  );
+    <ResultPhase
+      currentUser={currentUser}
+      facts={facts}
+      votes={votes}
+      leaderboard={leaderboard}
+      onReset={handleReset}
+      onLogout={handleLogout}
+    />
+  )
 }
