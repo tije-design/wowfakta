@@ -44,6 +44,8 @@ const ACCURACY_COLOR: Record<string, string> = {
 
 export default function ResultPhase({ currentUser, facts, votes, leaderboard, onReset, onLogout }: Props) {
   const [confirmReset, setConfirmReset] = useState(false)
+  const [confirmFullReset, setConfirmFullReset] = useState(false)
+  const [fullResetting, setFullResetting] = useState(false)
   const [aiResult, setAiResult] = useState<AiResult | null>(null)
   const [aiLoading, setAiLoading] = useState(true)
   const [selectedFact, setSelectedFact] = useState<FactWithVotes | null>(null)
@@ -216,10 +218,17 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
             <p className="text-white/30 text-xs mb-4">Mulai sesi baru untuk hari berikutnya</p>
             <button
               onClick={() => setConfirmReset(true)}
-              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors mb-2"
               style={{ color: 'rgba(248,113,113,0.6)', border: '1px solid rgba(239,68,68,0.2)' }}
             >
               🗑️ Reset data hari ini
+            </button>
+            <button
+              onClick={() => setConfirmFullReset(true)}
+              className="w-full py-2.5 rounded-lg text-sm font-semibold transition-colors"
+              style={{ color: 'rgba(248,113,113,0.35)', border: '1px solid rgba(239,68,68,0.12)' }}
+            >
+              ⚠️ Reset semua data (dari nol)
             </button>
           </div>
         )}
@@ -231,6 +240,65 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
           onConfirm={async () => { await onReset(); setConfirmReset(false) }}
           onCancel={() => setConfirmReset(false)}
         />
+      )}
+
+      {confirmFullReset && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center p-5"
+          style={{ background: 'rgba(0,0,0,0.8)', backdropFilter: 'blur(6px)' }}
+          onClick={e => { if (e.target === e.currentTarget) setConfirmFullReset(false) }}
+        >
+          <div
+            className="w-full max-w-sm rounded-xl p-6 animate-pop-in"
+            style={{ background: '#060f1e', border: '1px solid rgba(239,68,68,0.4)', boxShadow: '0 24px 60px rgba(0,0,0,0.7)' }}
+          >
+            <div className="w-14 h-14 rounded-lg mx-auto mb-4 flex items-center justify-center text-2xl"
+              style={{ background: 'rgba(239,68,68,0.12)', border: '1px solid rgba(239,68,68,0.3)' }}>
+              ⚠️
+            </div>
+            <div className="text-center mb-6">
+              <h3 className="text-lg font-black text-white mb-2">Reset semua data?</h3>
+              <p className="text-white/40 text-sm leading-relaxed">
+                Semua sesi, fakta, vote, dan poin leaderboard akan dihapus permanen.
+              </p>
+              <p className="text-red-400/60 text-xs mt-2 font-semibold">Tidak bisa dibatalkan!</p>
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setConfirmFullReset(false)}
+                disabled={fullResetting}
+                className="flex-1 py-3.5 rounded-lg text-white/50 font-semibold text-sm hover:text-white/80 disabled:opacity-40"
+                style={{ border: '1px solid rgba(255,255,255,0.1)' }}
+              >
+                Batal
+              </button>
+              <button
+                disabled={fullResetting}
+                onClick={async () => {
+                  setFullResetting(true)
+                  await fetch('/api/admin', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ action: 'full_reset', requester: currentUser }),
+                  })
+                  setFullResetting(false)
+                  setConfirmFullReset(false)
+                  onLogout()
+                }}
+                className="flex-1 py-3.5 rounded-lg font-black text-sm active:scale-[0.97] disabled:opacity-50"
+                style={{ background: 'rgba(239,68,68,0.15)', color: '#f87171', border: '1px solid rgba(239,68,68,0.4)' }}
+              >
+                {fullResetting ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <div className="w-3.5 h-3.5 border-2 rounded-full animate-spin"
+                      style={{ borderColor: 'rgba(248,113,113,0.3) rgba(248,113,113,0.3) rgba(248,113,113,0.3) #f87171' }} />
+                    Mereset...
+                  </span>
+                ) : 'Ya, hapus semua'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {selectedFact && (

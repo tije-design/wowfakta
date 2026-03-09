@@ -11,8 +11,20 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Hanya admin yang bisa melakukan ini' }, { status: 403 })
   }
 
-  if (!session_id || !action) {
+  if (!action) {
     return NextResponse.json({ error: 'Missing fields' }, { status: 400 })
+  }
+
+  if (action === 'full_reset') {
+    await supabase.from('votes').delete().not('id', 'is', null)
+    await supabase.from('facts').delete().not('id', 'is', null)
+    await supabase.from('sessions').delete().not('id', 'is', null)
+    await supabase.from('leaderboard').delete().not('member_name', 'is', null)
+    return NextResponse.json({ success: true })
+  }
+
+  if (!session_id) {
+    return NextResponse.json({ error: 'Missing session_id' }, { status: 400 })
   }
 
   const { data: session } = await supabase
