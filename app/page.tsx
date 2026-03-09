@@ -13,6 +13,7 @@ type SessionData = {
   session: Session
   facts: Fact[]
   votes: Vote[]
+  presences: { member_name: string }[]
 }
 
 export default function Home() {
@@ -20,7 +21,6 @@ export default function Home() {
   const [sessionData, setSessionData] = useState<SessionData | null>(null)
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
-  const [presentUsers, setPresentUsers] = useState<string[]>([])
 
   const currentUserRef = useRef<Member | null>(null)
 
@@ -46,30 +46,23 @@ export default function Home() {
     const savedName = localStorage.getItem('factboard_name') as Member | null
     if (savedName && MEMBERS.includes(savedName)) {
       setCurrentUser(savedName)
+      currentUserRef.current = savedName
     }
     Promise.all([fetchSession(), fetchLeaderboard()]).finally(() => setLoading(false))
   }, [fetchSession, fetchLeaderboard])
 
-  // Realtime: DB changes + Presence
+  // Realtime: DB changes (sessions, facts, votes, presences)
   useEffect(() => {
     const channel = supabase
       .channel('factboard_realtime')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'sessions' }, () => fetchSession())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'facts' }, () => fetchSession())
       .on('postgres_changes', { event: '*', schema: 'public', table: 'votes' }, () => fetchSession())
-      .on('presence', { event: 'sync' }, () => {
-        const state = channel.presenceState<{ user: string }>()
-        const users = [...new Set(Object.values(state).flat().map(p => p.user))]
-        setPresentUsers(users)
-      })
-      .subscribe(async (status) => {
-        if (status === 'SUBSCRIBED' && currentUser) {
-          await channel.track({ user: currentUser })
-        }
-      })
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'presences' }, () => fetchSession())
+      .subscribe()
 
     return () => { supabase.removeChannel(channel) }
-  }, [fetchSession, currentUser])
+  }, [fetchSession])
 
   // Polling fallback — jika Supabase Realtime lambat di prod
   useEffect(() => {
@@ -80,17 +73,25 @@ export default function Home() {
   // Sync ref agar fetchSession selalu tahu voter terkini
   useEffect(() => { currentUserRef.current = currentUser }, [currentUser])
 
+  // Daftarkan presence ke DB setiap kali user + session tersedia
+  useEffect(() => {
+    if (!currentUser || !sessionData?.session.id) return
+    fetch('/api/presence', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ session_id: sessionData.session.id, member_name: currentUser }),
+    })
+  }, [currentUser, sessionData?.session.id])
+
   const handleSelectName = (name: Member) => {
     localStorage.setItem('factboard_name', name)
     currentUserRef.current = name
     setCurrentUser(name)
-    setPresentUsers(prev => [...new Set([...prev, name])])
   }
 
   const handleLogout = () => {
     localStorage.removeItem('factboard_name')
     setCurrentUser(null)
-    setPresentUsers([])
   }
 
   const handleSubmitFact = async (content: string) => {
@@ -174,8 +175,11 @@ export default function Home() {
     )
   }
 
+  // Nama yang sudah hadir (dari DB presences) — untuk disable di NamePicker
+  const dbPresentNames = sessionData?.presences.map(p => p.member_name) ?? []
+
   if (!currentUser) {
-    return <NamePicker onSelect={handleSelectName} presentNames={presentUsers} />
+    return <NamePicker onSelect={handleSelectName} presentNames={dbPresentNames} />
   }
 
   if (!sessionData) {
@@ -190,10 +194,10 @@ export default function Home() {
   const myFact = facts.find(f => f.member_name === currentUser) || null
   const myVote = votes.find(v => v.voter_name === currentUser) || null
 
-  // Union: current user + presence channel + submitted facts (agar selalu muncul meski presence lambat)
+  // Union: current user (selalu) + DB presences + submitted facts
   const presences = [...new Set([
     currentUser,
-    ...presentUsers,
+    ...sessionData.presences.map(p => p.member_name),
     ...facts.map(f => f.member_name),
   ])].map(name => ({ member_name: name }))
 

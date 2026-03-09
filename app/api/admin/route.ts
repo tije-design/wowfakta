@@ -18,6 +18,7 @@ export async function POST(req: NextRequest) {
   if (action === 'full_reset') {
     await supabase.from('votes').delete().not('id', 'is', null)
     await supabase.from('facts').delete().not('id', 'is', null)
+    await supabase.from('presences').delete().not('member_name', 'is', null)
     await supabase.from('sessions').delete().not('id', 'is', null)
     await supabase.from('leaderboard').delete().not('member_name', 'is', null)
     return NextResponse.json({ success: true })

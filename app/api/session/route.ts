@@ -49,5 +49,11 @@ export async function GET(req: NextRequest) {
     .select('*')
     .eq('session_id', session.id)
 
-  return NextResponse.json({ session, facts, votes: votes || [] })
+  // ambil presences untuk session ini
+  const { data: presences } = await supabase
+    .from('presences')
+    .select('member_name')
+    .eq('session_id', session.id)
+
+  return NextResponse.json({ session, facts, votes: votes || [], presences: presences || [] })
 }
