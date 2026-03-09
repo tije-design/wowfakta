@@ -34,4 +34,5 @@ export type LeaderboardEntry = {
   member_name: string
   total_points: number
   sessions_participated: number
+  wins: number
 }

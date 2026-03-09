@@ -9,11 +9,12 @@ import Link from 'next/link'
 type Props = {
   leaderboard: LeaderboardEntry[]
   currentUser: Member
+  todayPoints?: Record<string, number>
 }
 
 const RANK_EMOJI = ['🥇', '🥈', '🥉']
 
-export default function RacingLeaderboard({ leaderboard, currentUser }: Props) {
+export default function RacingLeaderboard({ leaderboard, currentUser, todayPoints }: Props) {
   const [animated, setAnimated] = useState(false)
 
   useEffect(() => {
@@ -65,10 +66,17 @@ export default function RacingLeaderboard({ leaderboard, currentUser }: Props) {
                   {medal && <span className="text-sm">{medal}</span>}
                 </div>
 
-                {/* Name */}
-                <span className={`text-xs font-bold w-12 flex-shrink-0 truncate ${isMe ? 'text-white' : 'text-white/55'}`}>
-                  {entry.member_name}
-                </span>
+                {/* Name + wins */}
+                <div className="flex flex-col w-12 flex-shrink-0">
+                  <span className={`text-xs font-bold truncate ${isMe ? 'text-white' : 'text-white/55'}`}>
+                    {entry.member_name}
+                  </span>
+                  {entry.wins > 0 && (
+                    <span className="text-[9px] text-amber-400/60 font-semibold leading-tight">
+                      🏆 {entry.wins}×
+                    </span>
+                  )}
+                </div>
 
                 {/* Track */}
                 <div
@@ -161,14 +169,21 @@ export default function RacingLeaderboard({ leaderboard, currentUser }: Props) {
                 </div>
 
                 {/* Points */}
-                <span
-                  className={`text-xs font-black w-10 text-right flex-shrink-0 tabular-nums ${
-                    rank < 3 && entry.total_points > 0 ? 'text-white' : 'text-white/25'
-                  }`}
-                >
-                  {entry.total_points}
-                  <span className="text-white/20 font-normal"> p</span>
-                </span>
+                <div className="flex flex-col items-end flex-shrink-0 w-12">
+                  <span
+                    className={`text-xs font-black tabular-nums ${
+                      rank < 3 && entry.total_points > 0 ? 'text-white' : 'text-white/25'
+                    }`}
+                  >
+                    {entry.total_points}
+                    <span className="text-white/20 font-normal"> p</span>
+                  </span>
+                  {todayPoints?.[entry.member_name] ? (
+                    <span className="text-[10px] font-bold tabular-nums" style={{ color: '#4ade80' }}>
+                      +{todayPoints[entry.member_name]}
+                    </span>
+                  ) : null}
+                </div>
               </div>
             </div>
           )

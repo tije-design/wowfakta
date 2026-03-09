@@ -7,7 +7,6 @@ import { supabase } from '@/lib/supabase'
 import NamePicker from '@/components/NamePicker'
 import SubmissionPhase from '@/components/SubmissionPhase'
 import VotingPhase from '@/components/VotingPhase'
-import RevealPhase from '@/components/RevealPhase'
 import ResultPhase from '@/components/ResultPhase'
 
 type SessionData = {
@@ -22,7 +21,7 @@ export default function Home() {
   const [leaderboard, setLeaderboard] = useState<LeaderboardEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [presentUsers, setPresentUsers] = useState<string[]>([])
-  const [revealed, setRevealed] = useState(false)
+
   const currentUserRef = useRef<Member | null>(null)
 
   const fetchSession = useCallback(async () => {
@@ -156,7 +155,6 @@ export default function Home() {
     })
     const data = await res.json()
     if (!res.ok) throw new Error(data.error)
-    setRevealed(false)
     await Promise.all([fetchSession(), fetchLeaderboard()])
   }
 
@@ -170,7 +168,7 @@ export default function Home() {
   }
 
   if (!currentUser) {
-    return <NamePicker onSelect={handleSelectName} />
+    return <NamePicker onSelect={handleSelectName} presentNames={presentUsers} />
   }
 
   if (!sessionData) {
@@ -217,16 +215,6 @@ export default function Home() {
         onVote={handleVote}
         onEndVoting={handleEndVoting}
         onReset={handleReset}
-        onLogout={handleLogout}
-      />
-    )
-  }
-
-  if (!revealed) {
-    return (
-      <RevealPhase
-        currentUser={currentUser}
-        onReveal={() => setRevealed(true)}
         onLogout={handleLogout}
       />
     )

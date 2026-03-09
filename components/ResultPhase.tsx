@@ -46,6 +46,7 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
   const [confirmReset, setConfirmReset] = useState(false)
   const [aiResult, setAiResult] = useState<AiResult | null>(null)
   const [aiLoading, setAiLoading] = useState(true)
+  const [selectedFact, setSelectedFact] = useState<FactWithVotes | null>(null)
 
   const isAdmin = currentUser === ADMIN
 
@@ -59,18 +60,6 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
   const winner = factsWithVotes[0]
   const isWinner = winner?.member_name === currentUser && winner.vote_count > 0
 
-  useEffect(() => {
-    if (facts.length === 0) { setAiLoading(false); return }
-    fetch('/api/evaluate', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ facts }),
-    })
-      .then(r => r.json())
-      .then(data => { if (!data.error) setAiResult(data) })
-      .catch(() => {})
-      .finally(() => setAiLoading(false))
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="menti-bg min-h-screen text-white flex flex-col">
@@ -79,22 +68,85 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
 
       <div className="flex-1 flex flex-col px-5 pb-8 max-w-lg mx-auto w-full">
 
-        {/* Hero */}
-        <div className="text-center pt-5 pb-7 animate-slide-up">
-          <div className="text-5xl mb-3 animate-float">
-            {isWinner ? '🏆' : '🎉'}
+        {/* Hero — Winner Spotlight */}
+        {winner && winner.vote_count > 0 ? (
+          <div className="relative flex flex-col items-center pt-4 pb-5 animate-slide-up overflow-hidden">
+
+            {/* Confetti rain */}
+            {[...Array(14)].map((_, i) => (
+              <div
+                key={`cf${i}`}
+                className="absolute pointer-events-none"
+                style={{
+                  width:  i % 2 === 0 ? 7 : 5,
+                  height: i % 2 === 0 ? 7 : 11,
+                  borderRadius: i % 3 === 0 ? '50%' : '2px',
+                  background: ['#fbbf24','#f87171','#60a5fa','#34d399','#c084fc','#fb923c'][i % 6],
+                  left: `${4 + i * 7}%`,
+                  top: 0,
+                  animation: `confetti-fall ${1.1 + (i % 4) * 0.35}s ease-in ${i * 0.18}s infinite`,
+                }}
+              />
+            ))}
+
+            {/* Crown */}
+            <div className="text-4xl animate-crown mb-1 z-10 select-none">👑</div>
+
+            {/* Orbit area */}
+            <div className="relative flex items-center justify-center mb-4" style={{ width: 168, height: 168 }}>
+
+              {/* Dashed ring — clockwise */}
+              <div className="absolute inset-0 rounded-full animate-spin-cw"
+                style={{ border: '1.5px dashed rgba(251,191,36,0.35)' }} />
+
+              {/* Orbiting emojis — each in its own rotating wrapper */}
+              {(['⭐','✨','💫','🌟'] as const).map((em, i) => (
+                <div
+                  key={em}
+                  className="absolute inset-0"
+                  style={{ animation: `spin-cw ${4 + i * 0.8}s linear infinite`, animationDelay: `${i * -1.1}s` }}
+                >
+                  <span className="absolute text-lg select-none" style={{ top: -14, left: '50%', transform: 'translateX(-50%)' }}>
+                    {em}
+                  </span>
+                </div>
+              ))}
+
+              {/* Avatar */}
+              <div className="relative z-10 animate-winner-glow animate-winner-enter rounded-full overflow-hidden"
+                style={{ width: 86, height: 86 }}>
+                <Avatar name={winner.member_name} size={86} rounded="rounded-full" />
+              </div>
+            </div>
+
+            {/* Name */}
+            {isWinner ? (
+              <>
+                <h2 className="text-3xl font-black gradient-text mb-1">Kamu menang!</h2>
+                <p className="text-white/40 text-sm mb-3">Faktamu paling disukai hari ini 🎊</p>
+              </>
+            ) : (
+              <>
+                <p className="text-white/40 text-[11px] font-bold tracking-widest uppercase mb-1">Pemenang hari ini</p>
+                <h2 className="text-2xl font-black text-white mb-1">{winner.member_name}</h2>
+                {votedFact && <p className="text-white/35 text-xs mb-3">Kamu vote fakta milik {votedFact.member_name}</p>}
+              </>
+            )}
+
+            {/* Vote badge */}
+            <div className="px-4 py-1.5 rounded-full text-sm font-bold" style={{ background: 'rgba(245,158,11,0.12)', border: '1px solid rgba(245,158,11,0.3)', color: '#fbbf24' }}>
+              🏆 {winner.vote_count} vote{winner.vote_count !== 1 ? 's' : ''}
+            </div>
           </div>
-          <h2 className="text-3xl font-black text-white mb-2">
-            {isWinner ? 'Kamu menang!' : 'Hasil voting!'}
-          </h2>
-          <p className="text-white/50 text-sm">
-            {isWinner
-              ? 'Faktamu yang paling menarik hari ini 🎊'
-              : votedFact
-              ? `Kamu vote fakta milik ${votedFact.member_name}`
-              : new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </p>
-        </div>
+        ) : (
+          <div className="text-center pt-5 pb-7 animate-slide-up">
+            <div className="text-5xl mb-3">🎉</div>
+            <h2 className="text-3xl font-black text-white mb-2">Hasil voting!</h2>
+            <p className="text-white/50 text-sm">
+              {new Date().toLocaleDateString('id-ID', { weekday: 'long', day: 'numeric', month: 'long' })}
+            </p>
+          </div>
+        )}
 
         {/* Results — bar chart */}
         <div className="glass-card rounded-xl p-5 mb-5 animate-slide-up" style={{ animationDelay: '0.07s', opacity: 0 }}>
@@ -121,9 +173,13 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
                   </div>
 
                   {/* Bar */}
-                  <div className="h-8 rounded-xl overflow-hidden relative" style={{ background: 'rgba(255,255,255,0.05)' }}>
+                  <div
+                    className="h-8 rounded-xl overflow-hidden relative cursor-pointer"
+                    style={{ background: 'rgba(255,255,255,0.05)' }}
+                    onClick={() => setSelectedFact(fact)}
+                  >
                     <div
-                      className="h-full rounded-xl animate-bar-grow flex items-center px-3"
+                      className="h-full rounded-xl animate-bar-grow"
                       style={{
                         width: `${Math.max(pct, 4)}%`,
                         background: isTop
@@ -133,8 +189,8 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
                         animationDelay: `${0.15 + i * 0.08}s`,
                       }}
                     />
-                    <p className="absolute inset-0 flex items-center px-3 text-xs text-white/50 truncate">
-                      {fact.content}
+                    <p className="absolute inset-0 flex items-center px-3 text-xs text-white/30">
+                      Lihat fakta →
                     </p>
                   </div>
                 </div>
@@ -143,60 +199,12 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
           </div>
         </div>
 
-        {/* AI Evaluation */}
-        <div className="rounded-xl p-5 mb-5 animate-slide-up" style={{ animationDelay: '0.35s', opacity: 0, background: 'rgba(139,92,246,0.08)', border: '1px solid rgba(139,92,246,0.2)' }}>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-base">🤖</span>
-            <span className="text-violet-400 text-xs font-bold tracking-widest uppercase">Penilaian Claude AI</span>
-          </div>
-
-          {aiLoading ? (
-            <div className="flex items-center gap-3 py-2">
-              <div className="w-4 h-4 border-2 border-violet-400/30 border-t-violet-400 rounded-full animate-spin flex-shrink-0" />
-              <span className="text-white/30 text-sm">Sedang menganalisis fakta-fakta...</span>
-            </div>
-          ) : aiResult ? (
-            <>
-              {/* AI Winner pick */}
-              <div className="rounded-lg px-4 py-3 mb-4" style={{ background: 'rgba(139,92,246,0.12)', border: '1px solid rgba(139,92,246,0.25)' }}>
-                <p className="text-violet-300 text-[10px] font-bold tracking-widest uppercase mb-1.5">Pilihan Terbaik AI</p>
-                <div className="flex items-center gap-2 mb-1.5">
-                  <Avatar name={aiResult.winner.member_name} size={20} rounded="rounded-md" />
-                  <span className="text-white font-bold text-sm">{aiResult.winner.member_name}</span>
-                </div>
-                <p className="text-white/60 text-xs leading-relaxed">{aiResult.winner.reason}</p>
-              </div>
-
-              {/* Per-fact evaluations */}
-              <div className="space-y-2.5">
-                {aiResult.evaluations.map((ev) => {
-                  const fact = facts.find(f => f.member_name === ev.member_name)
-                  return (
-                    <div key={ev.member_name} className="flex items-start gap-3">
-                      <Avatar name={ev.member_name} size={18} rounded="rounded-md" className="flex-shrink-0 mt-0.5" />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 mb-0.5">
-                          <span className="text-white/70 text-xs font-semibold">{ev.member_name}</span>
-                          <span className="text-[10px] font-bold px-1.5 py-0.5 rounded" style={{ background: `${ACCURACY_COLOR[ev.accuracy]}20`, color: ACCURACY_COLOR[ev.accuracy] }}>
-                            {ev.accuracy}
-                          </span>
-                          <span className="text-white/30 text-[10px] ml-auto">★ {ev.interest_score}/10</span>
-                        </div>
-                        {fact && <p className="text-white/30 text-[10px] mb-0.5 truncate">&ldquo;{fact.content}&rdquo;</p>}
-                        <p className="text-white/50 text-[11px]">{ev.comment}</p>
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </>
-          ) : (
-            <p className="text-white/30 text-sm">Gagal memuat penilaian AI.</p>
-          )}
-        </div>
-
         {/* Racing leaderboard */}
-        <RacingLeaderboard leaderboard={leaderboard} currentUser={currentUser} />
+        <RacingLeaderboard
+          leaderboard={leaderboard}
+          currentUser={currentUser}
+          todayPoints={Object.fromEntries(factsWithVotes.filter(f => f.vote_count > 0).map(f => [f.member_name, f.vote_count]))}
+        />
 
         {/* Admin panel */}
         {isAdmin && (
@@ -223,6 +231,34 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
           onConfirm={async () => { await onReset(); setConfirmReset(false) }}
           onCancel={() => setConfirmReset(false)}
         />
+      )}
+
+      {selectedFact && (
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center pb-6 px-5"
+          style={{ background: 'rgba(0,0,0,0.6)' }}
+          onClick={() => setSelectedFact(null)}
+        >
+          <div
+            className="w-full max-w-lg rounded-xl p-5 animate-slide-up"
+            style={{ background: '#1a2035', border: '1px solid rgba(255,255,255,0.1)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            <div className="flex items-center gap-2 mb-3">
+              <Avatar name={selectedFact.member_name} size={22} rounded="rounded-md" />
+              <span className="text-white font-bold text-sm">{selectedFact.member_name}</span>
+              <span className="text-white/30 text-xs ml-auto">{selectedFact.vote_count} vote</span>
+            </div>
+            <p className="text-white/80 text-sm leading-relaxed mb-4">&ldquo;{selectedFact.content}&rdquo;</p>
+            <button
+              onClick={() => setSelectedFact(null)}
+              className="w-full py-2.5 rounded-lg text-sm text-white/40 font-semibold"
+              style={{ background: 'rgba(255,255,255,0.06)' }}
+            >
+              Tutup
+            </button>
+          </div>
+        </div>
       )}
     </div>
   )

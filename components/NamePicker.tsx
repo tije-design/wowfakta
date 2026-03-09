@@ -8,9 +8,10 @@ const ADMIN_PASSWORD = 'saxofour37'
 
 type Props = {
   onSelect: (name: Member) => void
+  presentNames?: string[]
 }
 
-export default function NamePicker({ onSelect }: Props) {
+export default function NamePicker({ onSelect, presentNames = [] }: Props) {
   const [showPasswordModal, setShowPasswordModal] = useState(false)
   const [password, setPassword] = useState('')
   const [passwordError, setPasswordError] = useState(false)
@@ -66,19 +67,26 @@ export default function NamePicker({ onSelect }: Props) {
       <div className="w-full max-w-sm animate-slide-up" style={{ animationDelay: '0.08s', opacity: 0 }}>
         <div className="glass-card rounded-xl p-6">
           <div className="grid grid-cols-2 gap-2.5">
-            {MEMBERS.map((name, i) => (
-              <button
-                key={name}
-                onClick={() => handleNameClick(name)}
-                className="glass-card glass-card-hover group relative rounded-lg px-3 py-3 flex items-center gap-3 transition-all duration-200 active:scale-95 animate-slide-up"
-                style={{ animationDelay: `${0.12 + i * 0.05}s`, opacity: 0 }}
-              >
-                <Avatar name={name} size={36} rounded="rounded-xl" />
-                <div className="flex flex-col items-start">
-                  <span className="text-white font-semibold text-sm">{name}</span>
-                </div>
-              </button>
-            ))}
+            {MEMBERS.map((name, i) => {
+              const isPresent = name !== ADMIN && presentNames.includes(name)
+              return (
+                <button
+                  key={name}
+                  onClick={() => !isPresent && handleNameClick(name)}
+                  disabled={isPresent}
+                  className={`glass-card relative rounded-lg px-3 py-3 flex items-center gap-3 transition-all duration-200 animate-slide-up ${isPresent ? 'opacity-40 cursor-not-allowed' : 'glass-card-hover active:scale-95'}`}
+                  style={{ animationDelay: `${0.12 + i * 0.05}s`, opacity: 0 }}
+                >
+                  <Avatar name={name} size={36} rounded="rounded-xl" />
+                  <div className="flex flex-col items-start">
+                    <span className="text-white font-semibold text-sm">{name}</span>
+                    {isPresent && (
+                      <span className="text-[10px] text-green-400/70 font-medium leading-tight">Sudah hadir</span>
+                    )}
+                  </div>
+                </button>
+              )
+            })}
           </div>
         </div>
       </div>
