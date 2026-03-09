@@ -28,7 +28,7 @@ export default function TopBar({ currentUser, onLogout }: Props) {
   }, [menuOpen])
 
   return (
-    <div className="flex items-center justify-between px-5 pt-5 pb-3 animate-fade-in">
+    <div className="relative z-20 flex items-center justify-between px-5 pt-5 pb-3 animate-fade-in">
 
       {/* Left: branding + dropdown menu */}
       <div className="relative" ref={menuRef}>

@@ -96,14 +96,14 @@ export default function ResultPhase({ currentUser, facts, votes, leaderboard, on
             <div className="relative flex items-center justify-center mb-4" style={{ width: 168, height: 168 }}>
 
               {/* Dashed ring — clockwise */}
-              <div className="absolute inset-0 rounded-full animate-spin-cw"
+              <div className="absolute inset-0 rounded-full animate-spin-cw pointer-events-none"
                 style={{ border: '1.5px dashed rgba(251,191,36,0.35)' }} />
 
               {/* Orbiting emojis — each in its own rotating wrapper */}
               {(['⭐','✨','💫','🌟'] as const).map((em, i) => (
                 <div
                   key={em}
-                  className="absolute inset-0"
+                  className="absolute inset-0 pointer-events-none"
                   style={{ animation: `spin-cw ${4 + i * 0.8}s linear infinite`, animationDelay: `${i * -1.1}s` }}
                 >
                   <span className="absolute text-lg select-none" style={{ top: -14, left: '50%', transform: 'translateX(-50%)' }}>
