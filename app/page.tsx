@@ -71,6 +71,12 @@ export default function Home() {
     return () => { supabase.removeChannel(channel) }
   }, [fetchSession, currentUser])
 
+  // Polling fallback — jika Supabase Realtime lambat di prod
+  useEffect(() => {
+    const interval = setInterval(() => fetchSession(), 8000)
+    return () => clearInterval(interval)
+  }, [fetchSession])
+
   // Sync ref agar fetchSession selalu tahu voter terkini
   useEffect(() => { currentUserRef.current = currentUser }, [currentUser])
 
@@ -78,6 +84,7 @@ export default function Home() {
     localStorage.setItem('factboard_name', name)
     currentUserRef.current = name
     setCurrentUser(name)
+    setPresentUsers(prev => [...new Set([...prev, name])])
   }
 
   const handleLogout = () => {
@@ -183,10 +190,12 @@ export default function Home() {
   const myFact = facts.find(f => f.member_name === currentUser) || null
   const myVote = votes.find(v => v.voter_name === currentUser) || null
 
-  // Presences dari Realtime. Fallback ke facts jika belum ada yang tertrack
-  const presences = presentUsers.length > 0
-    ? presentUsers.map(u => ({ member_name: u }))
-    : facts.map(f => ({ member_name: f.member_name }))
+  // Union: current user + presence channel + submitted facts (agar selalu muncul meski presence lambat)
+  const presences = [...new Set([
+    currentUser,
+    ...presentUsers,
+    ...facts.map(f => f.member_name),
+  ])].map(name => ({ member_name: name }))
 
   if (session.status === 'submission') {
     return (
