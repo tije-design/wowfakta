@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { MEMBERS, Member, ADMIN } from '@/lib/constants'
 import Avatar from '@/components/Avatar'
+import Link from 'next/link'
 
 const ADMIN_PASSWORD = 'saxofour37'
 
@@ -91,9 +92,13 @@ export default function NamePicker({ onSelect, presentNames = [] }: Props) {
         </div>
       </div>
 
-      <p className="text-white/20 text-xs mt-8 animate-fade-in" style={{ animationDelay: '0.6s', opacity: 0 }}>
-        Namamu tersimpan otomatis
-      </p>
+      <div className="flex items-center gap-4 mt-8 animate-fade-in" style={{ animationDelay: '0.6s', opacity: 0 }}>
+        <p className="text-white/20 text-xs">Namamu tersimpan otomatis</p>
+        <span className="text-white/10 text-xs">·</span>
+        <Link href="/history" className="text-white/25 text-xs hover:text-white/50 transition-colors">
+          📋 History
+        </Link>
+      </div>
 
       {/* Password modal */}
       {showPasswordModal && (
