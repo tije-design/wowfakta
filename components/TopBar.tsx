@@ -6,11 +6,12 @@ import Avatar from '@/components/Avatar'
 import Link from 'next/link'
 
 type Props = {
-  currentUser: Member
-  onLogout: () => void
+  currentUser?: Member
+  onLogout?: () => void
+  spectatorMode?: boolean
 }
 
-export default function TopBar({ currentUser, onLogout }: Props) {
+export default function TopBar({ currentUser, onLogout, spectatorMode = false }: Props) {
   const [menuOpen, setMenuOpen] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
   const isAdmin = currentUser === ADMIN
@@ -85,31 +86,56 @@ export default function TopBar({ currentUser, onLogout }: Props) {
 
             <div style={{ height: 1, background: 'rgba(255,255,255,0.07)' }} />
 
-            <button
-              onClick={() => { setMenuOpen(false); onLogout() }}
-              className="w-full flex items-center gap-3 px-4 py-3 text-white/70 text-sm hover:bg-white/05 hover:text-white transition-colors"
-            >
-              <span>🚪</span>
-              <span className="font-semibold">Ganti nama</span>
-            </button>
+            {spectatorMode ? (
+              <Link
+                href="/"
+                onClick={() => setMenuOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 text-white/70 text-sm hover:bg-white/05 hover:text-white transition-colors"
+              >
+                <span>🚪</span>
+                <span className="font-semibold">Kembali ke Utama</span>
+              </Link>
+            ) : (
+              <button
+                onClick={() => { setMenuOpen(false); onLogout?.() }}
+                className="w-full flex items-center gap-3 px-4 py-3 text-white/70 text-sm hover:bg-white/05 hover:text-white transition-colors"
+              >
+                <span>🚪</span>
+                <span className="font-semibold">Keluar</span>
+              </button>
+            )}
           </div>
         )}
       </div>
 
-      {/* Right: admin badge + avatar */}
+      {/* Right: admin badge + avatar / spectator badge */}
       <div className="flex items-center gap-2">
-        {isAdmin && (
-          <span
-            className="text-xs font-bold px-2.5 py-1 rounded-full"
-            style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}
+        {spectatorMode ? (
+          <div
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-bold"
+            style={{ background: 'rgba(99,102,241,0.12)', border: '1px solid rgba(99,102,241,0.3)', color: '#a5b4fc' }}
           >
-            Admin
-          </span>
+            <span>📺</span>
+            <span>Spectator</span>
+          </div>
+        ) : (
+          <>
+            {isAdmin && (
+              <span
+                className="text-xs font-bold px-2.5 py-1 rounded-full"
+                style={{ background: 'rgba(245,158,11,0.15)', color: '#fbbf24', border: '1px solid rgba(245,158,11,0.3)' }}
+              >
+                Admin
+              </span>
+            )}
+            {currentUser && (
+              <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
+                <Avatar name={currentUser} size={20} rounded="rounded-md" />
+                <span className="text-sm font-semibold">{currentUser}</span>
+              </div>
+            )}
+          </>
         )}
-        <div className="flex items-center gap-2 glass-card px-3 py-1.5 rounded-full">
-          <Avatar name={currentUser} size={20} rounded="rounded-md" />
-          <span className="text-sm font-semibold">{currentUser}</span>
-        </div>
       </div>
     </div>
   )

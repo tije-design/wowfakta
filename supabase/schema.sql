@@ -26,10 +26,19 @@ CREATE TABLE votes (
   UNIQUE(session_id, voter_name)
 );
 
+-- Presences: siapa saja yang login pada session ini
+CREATE TABLE presences (
+  session_id UUID REFERENCES sessions(id) ON DELETE CASCADE NOT NULL,
+  member_name TEXT NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  PRIMARY KEY (session_id, member_name)
+);
+
 -- Enable realtime
 ALTER PUBLICATION supabase_realtime ADD TABLE sessions;
 ALTER PUBLICATION supabase_realtime ADD TABLE facts;
 ALTER PUBLICATION supabase_realtime ADD TABLE votes;
+ALTER PUBLICATION supabase_realtime ADD TABLE presences;
 
 -- View: leaderboard
 CREATE VIEW leaderboard AS

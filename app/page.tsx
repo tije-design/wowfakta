@@ -199,7 +199,7 @@ export default function Home() {
     currentUser,
     ...sessionData.presences.map(p => p.member_name),
     ...facts.map(f => f.member_name),
-  ])].map(name => ({ member_name: name }))
+  ].filter(Boolean))].map(name => ({ member_name: name }))
 
   if (session.status === 'submission') {
     return (

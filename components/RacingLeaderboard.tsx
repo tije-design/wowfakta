@@ -8,7 +8,7 @@ import Link from 'next/link'
 
 type Props = {
   leaderboard: LeaderboardEntry[]
-  currentUser: Member
+  currentUser?: Member
   todayPoints?: Record<string, number>
 }
 

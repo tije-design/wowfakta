@@ -20,17 +20,17 @@ type Props = {
   onLogout: () => void
 }
 
-const STICKY_COLORS = [
-  { bg: '#fef08a', text: '#713f12', shadow: 'rgba(161,100,15,0.25)', tape: 'rgba(255,255,255,0.55)' },
-  { bg: '#fda4af', text: '#881337', shadow: 'rgba(136,19,55,0.2)',  tape: 'rgba(255,255,255,0.55)' },
-  { bg: '#86efac', text: '#14532d', shadow: 'rgba(20,83,45,0.2)',   tape: 'rgba(255,255,255,0.55)' },
-  { bg: '#93c5fd', text: '#1e3a8a', shadow: 'rgba(30,58,138,0.2)',  tape: 'rgba(255,255,255,0.55)' },
-  { bg: '#fdba74', text: '#7c2d12', shadow: 'rgba(124,45,18,0.2)',  tape: 'rgba(255,255,255,0.55)' },
-  { bg: '#d8b4fe', text: '#581c87', shadow: 'rgba(88,28,135,0.2)',  tape: 'rgba(255,255,255,0.55)' },
-  { bg: '#67e8f9', text: '#164e63', shadow: 'rgba(22,78,99,0.2)',   tape: 'rgba(255,255,255,0.55)' },
+const TILE_COLORS = [
+  { tint: 'rgba(99,102,241,0.18)',  border: 'rgba(99,102,241,0.35)',  glow: 'rgba(99,102,241,0.5)',   label: 'rgba(165,180,252,0.9)'  },
+  { tint: 'rgba(20,184,166,0.18)',  border: 'rgba(20,184,166,0.35)',  glow: 'rgba(20,184,166,0.5)',   label: 'rgba(94,234,212,0.9)'   },
+  { tint: 'rgba(245,158,11,0.15)',  border: 'rgba(245,158,11,0.32)',  glow: 'rgba(245,158,11,0.45)',  label: 'rgba(253,211,77,0.9)'   },
+  { tint: 'rgba(168,85,247,0.18)',  border: 'rgba(168,85,247,0.35)',  glow: 'rgba(168,85,247,0.5)',   label: 'rgba(216,180,254,0.9)'  },
+  { tint: 'rgba(34,197,94,0.15)',   border: 'rgba(34,197,94,0.32)',   glow: 'rgba(34,197,94,0.45)',   label: 'rgba(134,239,172,0.9)'  },
+  { tint: 'rgba(251,113,133,0.15)', border: 'rgba(251,113,133,0.32)', glow: 'rgba(251,113,133,0.45)', label: 'rgba(253,164,175,0.9)'  },
+  { tint: 'rgba(56,189,248,0.15)',  border: 'rgba(56,189,248,0.32)',  glow: 'rgba(56,189,248,0.45)',  label: 'rgba(125,211,252,0.9)'  },
 ]
 
-const ROTATIONS = [-2.2, 1.8, -1.2, 2.4, -1.8, 1.2, -2.8]
+const TILE_LABELS = ['A', 'B', 'C', 'D', 'E', 'F', 'G']
 
 export default function VotingPhase({ currentUser, facts, myFact, myVote, votes, presences, onVote, onEndVoting, onReset, onLogout }: Props) {
   const [loading, setLoading] = useState<string | null>(null)
@@ -155,14 +155,15 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, votes,
           </div>
         )}
 
-        {/* Divider */}
+        {/* Section title */}
         {otherFacts.length > 0 && (
-          <div className="flex items-center gap-3 mb-5 animate-slide-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
-            <span className="text-white/25 text-[10px] tracking-widest uppercase font-semibold">
-              {myFact ? 'Pilih favoritmu' : 'Fakta hari ini'}
-            </span>
-            <div className="flex-1 h-px" style={{ background: 'rgba(255,255,255,0.07)' }} />
+          <div className="mb-4 animate-slide-up" style={{ animationDelay: '0.1s', opacity: 0 }}>
+            <p className="text-base font-black text-white mb-0.5">
+              {myFact ? '🗳️ Pilih favoritmu' : '📋 Fakta hari ini'}
+            </p>
+            <p className="text-xs" style={{ color: 'rgba(255,255,255,0.35)' }}>
+              {myFact ? 'Tap tile untuk vote · Bisa ganti kapan saja' : 'Kamu tidak submit, tidak bisa vote'}
+            </p>
           </div>
         )}
 
@@ -172,14 +173,15 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, votes,
           </div>
         )}
 
-        {/* Sticky note grid — other facts only */}
-        <div className="grid grid-cols-2 gap-4 mb-5">
+        {/* Kahoot-style tile grid — other facts only */}
+        <div className="grid grid-cols-2 gap-3 mb-5">
           {otherFacts.map((fact, i) => {
             const isVoted = myVote?.fact_id === fact.id
+            const isOther = !!myVote && !isVoted
             const isLoadingThis = loading === fact.id
             const clickable = canVote && !loading
-            const color = STICKY_COLORS[i % STICKY_COLORS.length]
-            const rot = ROTATIONS[i % ROTATIONS.length]
+            const color = TILE_COLORS[i % TILE_COLORS.length]
+            const label = TILE_LABELS[i % TILE_LABELS.length]
 
             return (
               <button
@@ -190,69 +192,69 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, votes,
                 style={{
                   animationDelay: `${0.14 + i * 0.07}s`,
                   opacity: 0,
-                  transform: isVoted
-                    ? `rotate(${rot * 0.4}deg) scale(1.04)`
-                    : `rotate(${rot}deg)`,
-                  transition: 'transform 0.2s ease, box-shadow 0.2s ease, filter 0.2s ease',
+                  transition: 'transform 0.2s ease, opacity 0.2s ease, box-shadow 0.2s ease',
                   cursor: clickable ? 'pointer' : 'default',
-                  filter: isLoadingThis ? 'brightness(0.85)' : 'none',
                 }}
                 onMouseEnter={e => {
-                  if (clickable && !isVoted) {
-                    (e.currentTarget as HTMLElement).style.transform = `rotate(${rot * 0.5}deg) scale(1.06)`
-                    ;(e.currentTarget as HTMLElement).style.zIndex = '10'
+                  if (clickable && !isVoted && !isOther) {
+                    (e.currentTarget as HTMLElement).style.transform = 'scale(1.04)'
                   }
                 }}
                 onMouseLeave={e => {
-                  if (clickable && !isVoted) {
-                    (e.currentTarget as HTMLElement).style.transform = `rotate(${rot}deg) scale(1)`
-                    ;(e.currentTarget as HTMLElement).style.zIndex = '1'
+                  if (clickable && !isVoted && !isOther) {
+                    (e.currentTarget as HTMLElement).style.transform = 'scale(1)'
                   }
                 }}
               >
-                {/* Sticky note body */}
                 <div
-                  className="rounded-sm"
+                  className="rounded-2xl overflow-hidden"
                   style={{
-                    background: color.bg,
-                    boxShadow: isVoted
-                      ? `0 8px 24px ${color.shadow}, 0 2px 6px rgba(0,0,0,0.15), inset 0 0 0 2.5px rgba(0,0,0,0.12)`
-                      : `0 4px 12px ${color.shadow}, 0 1px 4px rgba(0,0,0,0.1)`,
+                    background: color.tint,
+                    border: `1px solid ${isVoted ? color.glow : color.border}`,
                     minHeight: 130,
-                    padding: '28px 12px 14px',
+                    padding: '14px 14px 14px',
                     position: 'relative',
+                    opacity: isOther ? 0.25 : 1,
+                    boxShadow: isVoted
+                      ? `0 0 16px ${color.glow}, 0 4px 16px rgba(0,0,0,0.3)`
+                      : '0 2px 8px rgba(0,0,0,0.2)',
+                    transform: isVoted ? 'scale(1.04)' : 'scale(1)',
+                    transition: 'opacity 0.25s ease, box-shadow 0.25s ease, transform 0.2s ease, border-color 0.2s ease',
                   }}
                 >
-                  {/* Tape strip */}
+                  {/* Label badge top-left */}
                   <div
-                    style={{
-                      position: 'absolute',
-                      top: -8,
-                      left: '50%',
-                      transform: 'translateX(-50%)',
-                      width: 40,
-                      height: 16,
-                      background: color.tape,
-                      borderRadius: 3,
-                      boxShadow: '0 1px 3px rgba(0,0,0,0.12)',
-                    }}
-                  />
+                    className="text-xs font-black mb-2 w-5 h-5 rounded flex items-center justify-center"
+                    style={{ background: color.border, color: color.label, fontSize: 10 }}
+                  >
+                    {label}
+                  </div>
 
-                  {/* Selected checkmark */}
+                  {/* Fact text */}
+                  <p
+                    className="text-sm leading-snug font-semibold"
+                    style={{ color: 'rgba(255,255,255,0.88)', wordBreak: 'break-word' }}
+                  >
+                    {fact.content}
+                  </p>
+
+                  {/* Selected checkmark badge */}
                   {isVoted && (
                     <div
                       style={{
                         position: 'absolute',
-                        top: 8,
-                        right: 8,
-                        width: 20,
-                        height: 20,
-                        background: 'rgba(0,0,0,0.15)',
+                        top: 10,
+                        right: 10,
+                        width: 22,
+                        height: 22,
+                        background: color.border,
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        fontSize: 11,
+                        fontSize: 12,
+                        fontWeight: 900,
+                        color: '#fff',
                       }}
                     >
                       ✓
@@ -268,29 +270,13 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, votes,
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: 'rgba(255,255,255,0.3)',
+                        background: 'rgba(0,0,0,0.25)',
                         borderRadius: 'inherit',
                       }}
                     >
-                      <div
-                        className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"
-                        style={{ borderColor: `${color.text} transparent transparent transparent` }}
+                      <div className="w-5 h-5 border-2 rounded-full animate-spin"
+                        style={{ borderColor: 'rgba(255,255,255,0.2) rgba(255,255,255,0.2) rgba(255,255,255,0.2) #fff' }}
                       />
-                    </div>
-                  )}
-
-                  {/* Fact text */}
-                  <p
-                    className="text-sm leading-snug font-semibold mb-3"
-                    style={{ color: color.text, wordBreak: 'break-word' }}
-                  >
-                    {fact.content}
-                  </p>
-
-                  {/* Footer */}
-                  {isVoted && (
-                    <div className="flex items-center mt-auto">
-                      <span className="text-xs font-black ml-auto" style={{ color: color.text }}>Pilihanmu ✓</span>
                     </div>
                   )}
                 </div>

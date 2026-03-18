@@ -92,9 +92,13 @@ export default function NamePicker({ onSelect, presentNames = [] }: Props) {
         </div>
       </div>
 
-      <div className="mt-8 animate-fade-in" style={{ animationDelay: '0.6s', opacity: 0 }}>
+      <div className="mt-8 flex items-center gap-5 animate-fade-in" style={{ animationDelay: '0.6s', opacity: 0 }}>
         <Link href="/history" className="text-white/25 text-xs hover:text-white/50 transition-colors">
           📋 History
+        </Link>
+        <span className="text-white/10">·</span>
+        <Link href="/spectator" className="text-white/25 text-xs hover:text-white/50 transition-colors">
+          📺 Spectator
         </Link>
       </div>
 

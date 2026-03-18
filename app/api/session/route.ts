@@ -28,6 +28,8 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 
+  const spectator = req.nextUrl.searchParams.get('spectator') === 'true'
+
   // ambil facts untuk session ini
   const { data: rawFacts } = await supabase
     .from('facts')
@@ -55,5 +57,10 @@ export async function GET(req: NextRequest) {
     .select('member_name')
     .eq('session_id', session.id)
 
-  return NextResponse.json({ session, facts, votes: votes || [], presences: presences || [] })
+  // untuk spectator: sediakan daftar submitters (nama saja, tanpa info fakta mana milik siapa)
+  const submitters = spectator
+    ? (rawFacts || []).map(f => f.member_name).filter(Boolean)
+    : undefined
+
+  return NextResponse.json({ session, facts, votes: votes || [], presences: presences || [], ...(submitters !== undefined && { submitters }) })
 }
