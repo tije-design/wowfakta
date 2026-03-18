@@ -225,6 +225,8 @@ export default function Home() {
         facts={facts}
         myFact={myFact}
         myVote={myVote}
+        votes={votes}
+        presences={presences}
         onVote={handleVote}
         onEndVoting={handleEndVoting}
         onReset={handleReset}

@@ -5,12 +5,15 @@ import { Member, ADMIN } from '@/lib/constants'
 import { Fact, Vote } from '@/lib/supabase'
 import TopBar from '@/components/TopBar'
 import ResetConfirmModal from '@/components/ResetConfirmModal'
+import Avatar from '@/components/Avatar'
 
 type Props = {
   currentUser: Member
   facts: Fact[]
   myFact: Fact | null
   myVote: Vote | null
+  votes: Vote[]
+  presences: { member_name: string }[]
   onVote: (factId: string) => Promise<void>
   onEndVoting: () => Promise<void>
   onReset: () => Promise<void>
@@ -29,7 +32,7 @@ const STICKY_COLORS = [
 
 const ROTATIONS = [-2.2, 1.8, -1.2, 2.4, -1.8, 1.2, -2.8]
 
-export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote, onEndVoting, onReset, onLogout }: Props) {
+export default function VotingPhase({ currentUser, facts, myFact, myVote, votes, presences, onVote, onEndVoting, onReset, onLogout }: Props) {
   const [loading, setLoading] = useState<string | null>(null)
   const [adminLoading, setAdminLoading] = useState(false)
   const [error, setError] = useState('')
@@ -38,6 +41,9 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote
   const isAdmin = currentUser === ADMIN
   const canVote = !!myFact
   const allSorted = [...facts].sort((a, b) => a.id.localeCompare(b.id))
+  const votedNames = new Set(votes.map(v => v.voter_name))
+  const participantNames = presences.map(p => p.member_name)
+  const votePct = participantNames.length > 0 ? Math.round((votedNames.size / participantNames.length) * 100) : 0
   const otherFacts = allSorted.filter(f => f.id !== myFact?.id)
 
   const handleVote = async (factId: string) => {
@@ -85,6 +91,52 @@ export default function VotingPhase({ currentUser, facts, myFact, myVote, onVote
             </>
           )}
         </div>
+
+        {/* Voting progress card */}
+        {participantNames.length > 0 && (
+          <div className="glass-card rounded-lg p-4 mb-4 animate-slide-up" style={{ animationDelay: '0.04s', opacity: 0 }}>
+            <div className="flex items-center justify-between mb-3">
+              <span className="text-white/60 text-xs font-semibold uppercase tracking-wide">Voting</span>
+              <span className="text-white/80 text-xs font-bold">
+                {votedNames.size} vote · {participantNames.length} hadir
+              </span>
+            </div>
+            <div className="flex flex-wrap gap-3 mb-3">
+              {participantNames.map(name => {
+                const voted = votedNames.has(name)
+                return (
+                  <div key={name} className="flex flex-col items-center gap-1">
+                    <div className="relative">
+                      <div style={{ opacity: voted ? 1 : 0.35, transition: 'opacity 0.3s' }}>
+                        <Avatar name={name as Member} size={38} rounded="rounded-xl" />
+                      </div>
+                      {voted && (
+                        <div
+                          className="absolute -bottom-1 -right-1 w-4 h-4 rounded-full flex items-center justify-center text-[9px] font-black"
+                          style={{ background: '#22c55e', boxShadow: '0 0 0 2px #020b16' }}
+                        >
+                          ✓
+                        </div>
+                      )}
+                    </div>
+                    <span
+                      className="text-[10px] font-semibold max-w-[40px] truncate text-center"
+                      style={{ color: voted ? 'rgba(255,255,255,0.7)' : 'rgba(255,255,255,0.25)' }}
+                    >
+                      {name}
+                    </span>
+                  </div>
+                )
+              })}
+            </div>
+            <div className="h-1.5 rounded-full overflow-hidden" style={{ background: 'rgba(255,255,255,0.06)' }}>
+              <div
+                className="h-full rounded-full transition-all duration-700"
+                style={{ width: `${votePct}%`, background: 'linear-gradient(90deg, #f59e0b, #fbbf24)' }}
+              />
+            </div>
+          </div>
+        )}
 
         {/* Own fact card */}
         {myFact && (
