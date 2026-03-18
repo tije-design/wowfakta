@@ -92,9 +92,7 @@ export default function NamePicker({ onSelect, presentNames = [] }: Props) {
         </div>
       </div>
 
-      <div className="flex items-center gap-4 mt-8 animate-fade-in" style={{ animationDelay: '0.6s', opacity: 0 }}>
-        <p className="text-white/20 text-xs">Namamu tersimpan otomatis</p>
-        <span className="text-white/10 text-xs">·</span>
+      <div className="mt-8 animate-fade-in" style={{ animationDelay: '0.6s', opacity: 0 }}>
         <Link href="/history" className="text-white/25 text-xs hover:text-white/50 transition-colors">
           📋 History
         </Link>
