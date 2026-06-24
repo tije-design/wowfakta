@@ -109,7 +109,7 @@ export default function SubmissionPhase({
           </div>
 
           {presentNames.length > 0 ? (
-            <div className="flex flex-wrap gap-3 mb-3">
+            <div className="flex flex-wrap gap-3 mb-3 justify-center">
               {presentNames.map(name => {
                 const submitted = submittedNames.has(name)
                 return (

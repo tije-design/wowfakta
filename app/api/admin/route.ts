@@ -79,15 +79,16 @@ export async function POST(req: NextRequest) {
   }
 
   if (action === 'reset') {
-    // Hapus semua votes sesi ini
-    await supabase.from('votes').delete().eq('session_id', session_id)
-    // Hapus semua facts sesi ini
-    await supabase.from('facts').delete().eq('session_id', session_id)
-    // Reset status ke submission
+    // Tandai sesi lama sebagai completed agar tersimpan di history
+    if (session.status !== 'completed') {
+      await supabase.from('sessions').update({ status: 'completed' }).eq('id', session_id)
+    }
+
+    // Buat sesi baru untuk hari ini
+    const today = new Date().toISOString().split('T')[0]
     const { error } = await supabase
       .from('sessions')
-      .update({ status: 'submission' })
-      .eq('id', session_id)
+      .insert({ date: today, status: 'submission' })
 
     if (error) return NextResponse.json({ error: error.message }, { status: 500 })
 

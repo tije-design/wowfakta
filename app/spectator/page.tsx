@@ -108,7 +108,7 @@ export default function SpectatorPage() {
               {submittedNames.size} dari {MEMBERS.length} orang sudah submit fakta
             </p>
 
-            <div className="grid grid-cols-7 gap-8 mb-10">
+            <div className="flex flex-wrap justify-center gap-8 mb-10">
               {MEMBERS.map(name => {
                 const submitted = submittedNames.has(name)
                 return (
